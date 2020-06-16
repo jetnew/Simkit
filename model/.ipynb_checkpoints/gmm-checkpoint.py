@@ -1,3 +1,4 @@
+import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -42,8 +43,8 @@ class GMM:
             components_distribution=tfd.MultivariateNormalDiag(loc=mu,
                                                                scale_diag=sigma))
 
-    def loss(self, y, pi, mu, sigma):
-        """Loss function, negative log-likelihood."""
+    def loss(self, X, y, training=False):
+        pi, mu, sigma = self.model(X, training=training)
         samples = pi.shape[0]
         losses = 0
         for i in range(samples):
@@ -57,30 +58,26 @@ class GMM:
     def train_step(self, X, y):
         """TF train function."""
         with tf.GradientTape() as t:
-            pi, mu, sigma = self.model(X, training=True)
-            loss = self.loss(y, pi, mu, sigma)
+            loss = self.loss(X, y, training=True)
         gradients = t.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         return loss
     
     def fit(self, dataset, epochs=1000, plot=False):
-        """Fit with TF dataset."""
-        losses = []
-        print_every = int(0.1 * epochs)
+        """Fit with TF dataset."""        
+        # Tensorboard
+        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        train_log_dir = 'logs/gmm/' + current_time + '/train'
+        train_summary_writer = tf.summary.create_file_writer(train_log_dir)
         
-        for i in range(epochs):
+        for epoch in range(epochs):
             for train_x, train_y in dataset:
                 loss = self.train_step(train_x, train_y)
-            losses.append(loss)
-            if self.verbose and i % print_every == 0:
-                print('Epoch {}/{}: Negative Log-Likelihood {}'.format(i, epochs, losses[-1]))
-        
-        if plot:
-            plt.plot(range(len(losses)), losses)
-            plt.xlabel('Epochs')
-            plt.ylabel('Loss')
-            plt.title('Negative Log-Likelihood')
-            plt.show()
+            with train_summary_writer.as_default():
+                tf.summary.scalar('NLL', loss, step=epoch)
+            if epoch % (epochs // 10) == 0:
+                print(f"{epoch} [NLL: {loss}]")
+        return loss
             
     def prob(self, X, y):
         """Compute probability of y given X."""
