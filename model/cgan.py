@@ -94,4 +94,4 @@ class CGAN:
         
     def sample(self, X):
         noise = np.random.normal(0, 1, (X.shape[0], self.latent_dim)).astype(np.float32)
-        return cgan.generator([noise, X]).numpy()
+        return self.generator([noise, X]).numpy()
