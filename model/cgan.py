@@ -1,9 +1,5 @@
 import datetime
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-plt.style.use('seaborn')
-from mpl_toolkits import mplot3d
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Dense, Dropout, Concatenate
 from tensorflow.keras.layers import BatchNormalization, Activation
@@ -13,12 +9,15 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy
 
 class CGAN:
     """Generate y conditioned on x."""
-    def __init__(self, x_features, y_features, latent_dim, batch_size=32):
+    def __init__(self, x_features, y_features, latent_dim=32, g_hidden=16, d_hidden=16, label_smooth=0.9, d_dropout=0.4, d_clip=0.01):
         self.x_features = x_features
         self.y_features = y_features
         self.latent_dim = latent_dim
-        self.batch_size = batch_size
-        self.label_smooth = 0.9
+        self.g_hidden = g_hidden
+        self.d_hidden = d_hidden
+        self.label_smooth = label_smooth
+        self.d_dropout = d_dropout
+        self.d_clip = d_clip
         self.g_optimizer = RMSprop(1e-4)
         self.d_optimizer = RMSprop(1e-4)
         self.generator = self.build_generator()
@@ -27,23 +26,25 @@ class CGAN:
         self.discriminator.summary()
     
     def build_generator(self):
+        """Generator model consists of a dense layer after each component."""
         noise = Input(shape=(self.latent_dim,))  # noise
-        d_noise = Dense(16)(noise)
+        d_noise = Dense(self.g_hidden)(noise)
         x = Input(shape=(self.x_features,))  # condition
-        d_x = Dense(16)(x)
+        d_x = Dense(self.g_hidden)(x)
         z = Concatenate()([d_noise, d_x])
-        d_z = Dense(16)(z)
+        d_z = Dense(self.g_hidden)(z)
         y = Dense(self.y_features)(d_z)
         return Model([noise, x], y)
     
     def build_discriminator(self):
+        """Discriminator model consists of a dense layer after each component."""
         x = Input(shape=(self.x_features))  # condition
-        d_x = Dense(16)(x)
+        d_x = Dense(self.d_hidden)(x)
         y = Input(shape=(self.y_features))  # y
-        d_y = Dense(16)(y)
+        d_y = Dense(self.d_hidden)(y)
         h = Concatenate()([d_x, d_y])
-        h = Dense(16)(h)
-        h = Dropout(0.4)(h)
+        h = Dense(self.d_hidden)(h)
+        h = Dropout(self.d_dropout)(h)
         p = Dense(1)(h)
         model = Model([y, x], p)
         return model
@@ -56,7 +57,7 @@ class CGAN:
     
     @tf.function
     def train_step(self, X, real_y):
-        noise = tf.random.normal((self.batch_size, self.latent_dim))
+        noise = tf.random.normal((X.shape[0], self.latent_dim))
         
         with tf.GradientTape() as g_tape, tf.GradientTape() as d_tape:
             fake_y = self.generator([noise, X], training=True)
@@ -74,22 +75,23 @@ class CGAN:
         
         # Clip discriminator weights
         for var in self.discriminator.trainable_variables:
-            var.assign(tf.clip_by_value(var, -0.01, 0.01))
+            var.assign(tf.clip_by_value(var, -self.d_clip, self.d_clip))
         
         return g_loss, d_loss
     
-    def fit(self, dataset, epochs=1000):
+    def fit(self, dataset, epochs=300, verbose=True, logdir='cgan'):
+        # Tensorboard
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        train_log_dir = 'logs/cgan/' + current_time + '/train'
+        train_log_dir = 'logs/' + logdir + '/' + current_time
         train_summary_writer = tf.summary.create_file_writer(train_log_dir)
         
         for epoch in range(epochs):
             for X_train, y_train in dataset:
                 g_loss, d_loss = self.train_step(X_train, y_train)
             with train_summary_writer.as_default():
-                tf.summary.scalar('g_loss', g_loss, step=epoch)
-                tf.summary.scalar('d_loss', d_loss, step=epoch)
-            if epoch % (epochs // 10) == 0:
+                tf.summary.scalar('Generator Loss', g_loss, step=epoch)
+                tf.summary.scalar('Discriminator Loss', d_loss, step=epoch)
+            if verbose and epoch % (epochs // 10) == 0:
                 print(f"{epoch} [D loss: {d_loss}] [G loss: {g_loss}]")
         
     def sample(self, X):

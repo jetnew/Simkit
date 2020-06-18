@@ -11,12 +11,11 @@ tfd = tfp.distributions
 
 class GMM:
     """Gaussian Mixture Density Network."""
-    def __init__(self, x_features=2, y_features=1, n_components=4, n_hidden=50, verbose=False):
+    def __init__(self, x_features=2, y_features=1, n_components=4, n_hidden=50):
         self.x_features = x_features  # no. of input features
         self.y_features = y_features  # no. of output features
         self.n_components = n_components  # no. of components
-        self.n_hidden = n_hidden  # no. of hidden units 
-        self.verbose = verbose
+        self.n_hidden = n_hidden  # no. of hidden units
         self.build()
     
     def build(self):
@@ -30,9 +29,6 @@ class GMM:
 
         self.model = tf.keras.models.Model(input, [pi, mu, sigma])
         self.optimizer = tf.keras.optimizers.Adam()
-        
-        if self.verbose:
-            print(self.model.summary())
         
     def tfdGMM(self, pi, mu, sigma):
         """Tensorflow Probability Distributions GMM."""
@@ -63,11 +59,11 @@ class GMM:
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         return loss
     
-    def fit(self, dataset, epochs=1000, plot=False):
+    def fit(self, dataset, epochs=1000, plot=False, verbose=True, logdir='gmm'):
         """Fit with TF dataset."""        
         # Tensorboard
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        train_log_dir = 'logs/gmm/' + current_time + '/train'
+        train_log_dir = 'logs/' + logdir + '/' + current_time
         train_summary_writer = tf.summary.create_file_writer(train_log_dir)
         
         for epoch in range(epochs):
@@ -75,7 +71,7 @@ class GMM:
                 loss = self.train_step(train_x, train_y)
             with train_summary_writer.as_default():
                 tf.summary.scalar('NLL', loss, step=epoch)
-            if epoch % (epochs // 10) == 0:
+            if verbose and epoch % (epochs // 10) == 0:
                 print(f"{epoch} [NLL: {loss}]")
         return loss
             
