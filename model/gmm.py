@@ -7,6 +7,7 @@ from mpl_toolkits import mplot3d
 import tensorflow as tf
 import tensorflow_probability as tfp
 tfd = tfp.distributions
+from ax import optimize
 
 
 class GMM:
@@ -91,3 +92,27 @@ class GMM:
     def sample_fixed(self, X_fixed, count=20):
         X = np.stack([np.full(count, fill_value=x) for x in X_fixed], axis=1)
         return self.sample(X)
+    
+    def hyperopt(params, opt_params, dataset):
+        # Loss function
+        def loss_fn(p):
+            m = GMM(x_features=params["x_features"],
+                    y_features=params["y_features"],
+                    **p)
+            return m.fit(dataset, epochs=params["epochs"], verbose=False).numpy()
+        
+        # Ax hyperparameter optimisation
+        best_params, best_vals, exp, model = optimize(
+            parameters=[{'name': name, 'type': 'range', 'bounds': bounds}
+                        for name, bounds in opt_params.items()],
+            evaluation_function=loss_fn,
+            objective_name="NLL",
+            minimize=True,
+        )
+        
+        # Fit a new GMM with optimised hyperparameters
+        gmm = GMM(x_features=params['x_features'],
+                  y_features=params['y_features'],
+                  **best_params)
+        gmm.fit(dataset, params['epochs'], verbose=False)
+        return gmm
