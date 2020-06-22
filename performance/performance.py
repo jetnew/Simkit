@@ -1,13 +1,13 @@
 import numpy as np
 
 
-def prob_overlap(y, y_hat, bins=10):
+def prob_overlap(y, y_hat, bins=20):
     """Get probabilities of each bin, ignoring zeroes."""
-    p, b = np.histogram(y, bins)
-    q, _ = np.histogram(y_hat, b)
+    p, b = np.histogramdd(y, bins)
+    q, _ = np.histogramdd(y_hat, b)
     p, q = p / y.shape[0], q / y.shape[0]
-    idx = np.intersect1d(np.nonzero(p), np.nonzero(q))
-    return p[idx], q[idx]
+    idx = np.array(np.where(np.logical_and(p != 0, q != 0)))
+    return p[tuple(idx)], q[tuple(idx)]
 
 def kl(p, q):
     """Compute KL divergence."""
