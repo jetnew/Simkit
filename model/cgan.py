@@ -9,7 +9,7 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy
 
 class CGAN:
     """Generate y conditioned on x."""
-    def __init__(self, x_features, y_features, latent_dim=32, g_hidden=16, d_hidden=16, label_smooth=0.9, d_dropout=0.4, d_clip=0.01):
+    def __init__(self, x_features, y_features, latent_dim=32, g_hidden=16, d_hidden=16, label_smooth=0.9, d_dropout=0.2, d_clip=0.01):
         self.x_features = x_features
         self.y_features = y_features
         self.latent_dim = latent_dim
@@ -22,8 +22,6 @@ class CGAN:
         self.d_optimizer = RMSprop(1e-4)
         self.generator = self.build_generator()
         self.discriminator = self.build_discriminator()
-        self.generator.summary()
-        self.discriminator.summary()
     
     def build_generator(self):
         """Generator model consists of a dense layer after each component."""
@@ -55,6 +53,22 @@ class CGAN:
     def d_loss(self, real_y, fake_y):
         return -tf.math.reduce_mean(real_y * self.label_smooth) + tf.math.reduce_mean(fake_y)
     
+    def gradient_penalty(self, real_y, fake_y, X):
+        """Gradient penalty on discriminator"""
+        batch_size = real_y.shape[0]
+        alpha = tf.random.normal([batch_size, self.y_features], 0.0, 1.0)
+        diff = fake_y - real_y
+        interpolated = real_y + alpha * diff
+        
+        with tf.GradientTape() as gp_tape:
+            gp_tape.watch(interpolated)
+            pred = self.discriminator([interpolated, X], training=True)
+            
+        gradients = gp_tape.gradient(pred, [interpolated])
+        norm = tf.sqrt(tf.reduce_sum(tf.square(gradients), axis=1))
+        gp = tf.reduce_mean((norm - 1.0) ** 2)
+        return gp
+    
     @tf.function
     def train_step(self, X, real_y):
         noise = tf.random.normal((X.shape[0], self.latent_dim))
@@ -65,8 +79,10 @@ class CGAN:
             real_pred = self.discriminator([real_y, X], training=True)
             fake_pred = self.discriminator([fake_y, X], training=True)
             
+#             gp = self.gradient_penalty(real_y, fake_y, X)
+            
             g_loss = self.g_loss(fake_pred)
-            d_loss = self.d_loss(real_pred, fake_pred)
+            d_loss = self.d_loss(real_pred, fake_pred)# + gp
             
         g_gradients = g_tape.gradient(g_loss, self.generator.trainable_variables)
         d_gradients = d_tape.gradient(d_loss, self.discriminator.trainable_variables)

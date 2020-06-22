@@ -32,23 +32,18 @@ class GMM:
         
     def tfdGMM(self, pi, mu, sigma):
         """Tensorflow Probability Distributions GMM."""
-        mu = tf.reshape(mu, (self.n_components, self.y_features))
-        sigma = tf.reshape(sigma, (self.n_components, self.y_features))
+        batch_size = mu.shape[0]
+        mu = tf.reshape(mu, shape=[batch_size, self.n_components, self.y_features])
+        sigma = tf.reshape(sigma, shape=[batch_size, self.n_components, self.y_features])
         return tfd.MixtureSameFamily(
             mixture_distribution=tfd.Categorical(probs=pi),
             components_distribution=tfd.MultivariateNormalDiag(loc=mu,
                                                                scale_diag=sigma))
-
     def loss(self, X, y, training=False):
         pi, mu, sigma = self.model(X, training=training)
-        samples = pi.shape[0]
-        losses = 0
-        for i in range(samples):
-            gmm = self.tfdGMM(pi[i], mu[i], sigma[i])
-            loss = gmm.log_prob(y[i])
-            loss = tf.negative(loss)
-            losses += loss
-        return losses / samples
+        gmm = self.tfdGMM(pi, mu, sigma)
+        loss = tf.negative(gmm.log_prob(y))
+        return tf.reduce_mean(loss)
     
     @tf.function
     def train_step(self, X, y):
@@ -77,21 +72,21 @@ class GMM:
             
     def prob(self, X, y):
         """Compute probability of y given X."""
-        pi, mu, sigma = self.model(X) 
-        samples = pi.shape[0]
-        y_prob = []
-        for i in range(samples):
-            y_prob.append(self.tfdGMM(pi[i], mu[i], sigma[i]).prob(y[i]).numpy())
-        return np.array(y_prob)
+        pi, mu, sigma = self.model(X)
+        batch_size = mu.shape[0]
+        mu = tf.reshape(mu, shape=[batch_size, self.n_components, self.y_features])
+        sigma = tf.reshape(sigma, shape=[batch_size, self.n_components, self.y_features])
+        y_prob = self.tfdGMM(pi, mu, sigma).prob(y)
+        return y_prob 
         
     def sample(self, X):
         """Sample y given X."""
-        pi, mu, sigma = self.model(X) 
-        samples = pi.shape[0]
-        y_pred = []
-        for i in range(samples):
-            y_pred.append(self.tfdGMM(pi[i], mu[i], sigma[i]).sample().numpy())
-        return np.array(y_pred)
+        pi, mu, sigma = self.model(X)
+        batch_size = mu.shape[0]
+        mu = tf.reshape(mu, shape=[batch_size, self.n_components, self.y_features])
+        sigma = tf.reshape(sigma, shape=[batch_size, self.n_components, self.y_features])
+        y_pred = self.tfdGMM(pi, mu, sigma).sample()
+        return y_pred
     
     def sample_fixed(self, X_fixed, count=20):
         X = np.stack([np.full(count, fill_value=x) for x in X_fixed], axis=1)
