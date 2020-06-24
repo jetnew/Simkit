@@ -27,10 +27,13 @@ class CGAN:
         """Generator model consists of a dense layer after each component."""
         noise = Input(shape=(self.latent_dim,))  # noise
         d_noise = Dense(self.g_hidden)(noise)
+        d_noise = Dense(self.g_hidden)(d_noise)
         x = Input(shape=(self.x_features,))  # condition
         d_x = Dense(self.g_hidden)(x)
+        d_x = Dense(self.g_hidden)(d_x)
         z = Concatenate()([d_noise, d_x])
         d_z = Dense(self.g_hidden)(z)
+        d_z = Dense(self.g_hidden)(d_z)
         y = Dense(self.y_features)(d_z)
         return Model([noise, x], y)
     
@@ -38,14 +41,16 @@ class CGAN:
         """Discriminator model consists of a dense layer after each component."""
         x = Input(shape=(self.x_features))  # condition
         d_x = Dense(self.d_hidden)(x)
+        d_x = Dense(self.d_hidden)(d_x)
         y = Input(shape=(self.y_features))  # y
         d_y = Dense(self.d_hidden)(y)
+        d_y = Dense(self.d_hidden)(d_y)
         h = Concatenate()([d_x, d_y])
+        h = Dense(self.d_hidden)(h)
         h = Dense(self.d_hidden)(h)
         h = Dropout(self.d_dropout)(h)
         p = Dense(1)(h)
-        model = Model([y, x], p)
-        return model
+        return Model([y, x], p)
     
     def g_loss(self, fake_y):
         return -tf.math.reduce_mean(fake_y)
@@ -69,6 +74,18 @@ class CGAN:
         gp = tf.reduce_mean((norm - 1.0) ** 2)
         return gp
     
+    def diversity_score(self, X):
+        batch_size = X.shape[0]
+        z1 = tf.random.normal([batch_size, self.latent_dim])
+        z2 = tf.random.normal([batch_size, self.latent_dim])
+        y1 = self.generator([z1, X], training=True)
+        y2 = self.generator([z2, X], training=True)
+        denom = tf.reduce_mean(tf.abs(z1 - z2), axis=1)
+        numer = tf.reduce_mean(tf.abs(y1 - y2), axis=1)
+        ds = tf.reduce_mean(numer/denom)
+        t = 0.1  # lower bound for numerical stability
+        return tf.math.minimum(ds, t)   
+    
     @tf.function
     def train_step(self, X, real_y):
         noise = tf.random.normal((X.shape[0], self.latent_dim))
@@ -80,8 +97,9 @@ class CGAN:
             fake_pred = self.discriminator([fake_y, X], training=True)
             
 #             gp = self.gradient_penalty(real_y, fake_y, X)
+            ds = self.diversity_score(X)
             
-            g_loss = self.g_loss(fake_pred)
+            g_loss = self.g_loss(fake_pred) - ds
             d_loss = self.d_loss(real_pred, fake_pred)# + gp
             
         g_gradients = g_tape.gradient(g_loss, self.generator.trainable_variables)
@@ -111,5 +129,5 @@ class CGAN:
                 print(f"{epoch} [D loss: {d_loss}] [G loss: {g_loss}]")
         
     def sample(self, X):
-        noise = np.random.normal(0, 1, (X.shape[0], self.latent_dim)).astype(np.float32)
+        noise = tf.random.normal((X.shape[0], self.latent_dim))
         return self.generator([noise, X]).numpy()
