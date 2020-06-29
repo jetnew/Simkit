@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def prob_overlap(y, y_hat, bins=20):
+def prob_overlap(y, y_hat, bins=5):
     """Get probabilities of each bin, ignoring zeroes."""
     p, b = np.histogramdd(y, bins)
     q, _ = np.histogramdd(y_hat, b)
