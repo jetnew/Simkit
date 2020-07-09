@@ -1,11 +1,11 @@
-# Grab
+# Simkit
 
-## Gaussian Mixture Model (GMM)
+A generalized framework for generative and probabilistic modelling to construct artificial environments for training reinforcement learning agents in TensorFlow 2.
 
-* Multivariate Gaussian Mixture Model - [Notebook](Multivariate%20Gaussian%20Mixture%20Model.ipynb)
-* GMM Variational Inference - [Notebook](GMM%20Variational%20Inference.ipynb)
-* GMM Mixture Density Network - [Notebook](GMM%20Mixture%20Density%20Network.ipynb)
+# Models
 
-## Conditional Generative Adversarial Network (CGAN)
-
-* Conditional GAN - [Notebook](Conditional%20GAN.ipynb)
+* Gaussian Mixture Density Network
+* Conditional Generative Adversarial Network
+* Bayesian Neural Network
+* Monte Carlo Dropout
+* Deep Ensemble
