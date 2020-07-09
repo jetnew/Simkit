@@ -2,22 +2,30 @@ import datetime
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Dense, Dropout, Concatenate
-from tensorflow.keras.layers import BatchNormalization, Activation
-from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam, RMSprop
-from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy
 
 class CGAN:
     """Generate y conditioned on x."""
-    def __init__(self, x_features, y_features, latent_dim=32, g_hidden=16, d_hidden=16, label_smooth=0.9, d_dropout=0.1, gp_weight=10):
+    def __init__(self, x_features, y_features,
+                 latent_dim=32,
+                 g_hidden=16,
+                 d_hidden=16,
+                 label_smooth=0.9,
+                 d_dropout=0.1,
+                 gp_weight=10,
+                 ds_weight=1):
         self.x_features = x_features
         self.y_features = y_features
+        
         self.latent_dim = latent_dim
         self.g_hidden = g_hidden
         self.d_hidden = d_hidden
         self.label_smooth = label_smooth
         self.d_dropout = d_dropout
         self.gp_weight = gp_weight
+        self.ds_weight = ds_weight
+        
         self.g_optimizer = Adam(0.0001)
         self.d_optimizer = RMSprop(0.0001)
         self.generator = self.build_generator()
@@ -44,14 +52,19 @@ class CGAN:
         h = Dense(self.d_hidden)(h)
         h = Dropout(self.d_dropout)(h)
         p = Dense(1)(h)
-        model = Model([y, x], p)
-        return model
+        return Model([y, x], p)
     
     def g_loss(self, fake_pred):
         return -tf.math.reduce_mean(fake_pred)
     
     def d_loss(self, real_pred, fake_pred):
         return -tf.math.reduce_mean(real_pred * self.label_smooth) + tf.math.reduce_mean(fake_pred)
+    
+    def loss(self, X, y):
+        noise = tf.random.normal((X.shape[0], self.latent_dim))
+        fake_y = self.generator([noise, X])
+        fake_pred = self.discriminator([fake_y, X])
+        return self.g_loss(fake_pred)
     
     def gradient_penalty(self, real_y, fake_y, X):
         """Gradient penalty on discriminator"""
@@ -77,7 +90,7 @@ class CGAN:
         denom = tf.reduce_mean(tf.abs(z1 - z2), axis=1)
         numer = tf.reduce_mean(tf.abs(y1 - y2), axis=1)
         ds = tf.reduce_mean(numer/denom)
-        return tf.math.minimum(ds, 0.1)  # lower bound for numerical stability
+        return tf.math.minimum(ds, 0.1) * self.ds_weight  # lower bound for numerical stability
     
     @tf.function
     def train_step(self, X, real_y):
@@ -102,21 +115,20 @@ class CGAN:
         
         return g_loss, d_loss
     
-    def fit(self, dataset, epochs=300, verbose=True, logdir='cgan'):
+    def fit(self, X, y, epochs=300, verbose=1, plot=False, logdir='cgan'):
         # Tensorboard
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         train_log_dir = 'logs/' + logdir + '/' + current_time
         train_summary_writer = tf.summary.create_file_writer(train_log_dir)
         
         for epoch in range(epochs):
-            for X_train, y_train in dataset:
-                g_loss, d_loss = self.train_step(X_train, y_train)
+            g_loss, d_loss = self.train_step(X, y)
             with train_summary_writer.as_default():
                 tf.summary.scalar('Generator Loss', g_loss, step=epoch)
                 tf.summary.scalar('Discriminator Loss', d_loss, step=epoch)
             if verbose and epoch % (epochs // 10) == 0:
                 print(f"{epoch} [D loss: {d_loss}] [G loss: {g_loss}]")
         
-    def sample(self, X):
+    def predict(self, X):
         noise = tf.random.normal((X.shape[0], self.latent_dim))
         return self.generator([noise, X]).numpy()
