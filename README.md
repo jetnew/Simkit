@@ -5,7 +5,7 @@ A generalized framework for generative and probabilistic modelling to construct 
 # Models
 
 * Conditional Generative Feature Models
-  * Gaussian Mixture Model
+  * Gaussian Mixture Density Network
   * Conditional Generative Adversarial Network
   
 * Probabilistic Response Models
