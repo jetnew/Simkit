@@ -14,7 +14,7 @@ def hyperopt(model, params, opt_params, X, y, trials=30, val_split=0.8):
         m = model(x_features=params['x_features'],
                   y_features=params['y_features'], **p)
         m.fit(X_train, y_train, epochs=params['epochs'], verbose=False)
-        p, q = prob_overlap(y_test, m.predict(X_test))
+        p, q = prob_overlap(y, m.predict(X))
         return {
             'loss': (m.loss(X_test, y_test), 0.0),
             'fKL': (kl(p, q), 0.0),
