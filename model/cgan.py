@@ -9,11 +9,11 @@ class CGAN:
     """Generate y conditioned on x."""
     def __init__(self, x_features, y_features,
                  latent_dim=32,
-                 g_hidden=16,
-                 d_hidden=16,
+                 g_hidden=32,
+                 d_hidden=32,
                  label_smooth=0.9,
                  d_dropout=0.1,
-                 gp_weight=10,
+                 gp_weight=1,
                  ds_weight=1):
         self.x_features = x_features
         self.y_features = y_features
@@ -115,7 +115,7 @@ class CGAN:
         
         return g_loss, d_loss
     
-    def fit(self, X, y, epochs=300, verbose=1, plot=False, logdir='cgan'):
+    def fit(self, X, y, epochs=1000, verbose=1, plot=False, logdir='cgan'):
         # Tensorboard
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         train_log_dir = 'logs/' + logdir + '/' + current_time

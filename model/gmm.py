@@ -7,7 +7,7 @@ tfd = tfp.distributions
 
 class GMM:
     """Gaussian Mixture Density Network."""
-    def __init__(self, x_features=2, y_features=1, n_components=4, n_hidden=50):
+    def __init__(self, x_features=2, y_features=1, n_components=32, n_hidden=32):
         self.x_features = x_features  # no. of input features
         self.y_features = y_features  # no. of output features
         self.n_components = n_components  # no. of components
@@ -48,7 +48,7 @@ class GMM:
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         return loss
     
-    def fit(self, X, y, epochs=1000, verbose=1, plot=False, logdir='gmm'):
+    def fit(self, X, y, epochs=1000, verbose=1, logdir='gmm'):
         """Fit with TF dataset."""        
         # Tensorboard
         current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -61,7 +61,6 @@ class GMM:
                 tf.summary.scalar('NLL', loss, step=epoch)
             if verbose and epoch % (epochs // 10) == 0:
                 print(f"{epoch} [NLL: {loss}]")
-        return loss
             
     def prob(self, X, y):
         """Compute probability of y given X."""

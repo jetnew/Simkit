@@ -7,14 +7,16 @@ from ax.utils.notebook.plotting import render, init_notebook_plotting
 init_notebook_plotting()
 from performance.performance import prob_overlap, kl, js
 
-def hyperopt(model, params, opt_params, X, y, trials=30):
+def hyperopt(model, params, opt_params, X, y, trials=30, val_split=0.8):
+    X_train, X_test = np.split(X, [int(val_split*X.shape[0])])
+    y_train, y_test = np.split(y, [int(val_split*y.shape[0])])
     def loss_function(p):
         m = model(x_features=params['x_features'],
                   y_features=params['y_features'], **p)
-        m.fit(X, y, epochs=params['epochs'], verbose=False)
-        p, q = prob_overlap(y, m.predict(X))
+        m.fit(X_train, y_train, epochs=params['epochs'], verbose=False)
+        p, q = prob_overlap(y_test, m.predict(X_test))
         return {
-            'loss': (m.loss(X, y), 0.0),
+            'loss': (m.loss(X_test, y_test), 0.0),
             'fKL': (kl(p, q), 0.0),
             'rKL': (kl(q, p), 0.0),
             'JS': (js(p, q), 0.0)}

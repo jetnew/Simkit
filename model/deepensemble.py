@@ -6,7 +6,7 @@ from tensorflow.keras import Sequential
 
 class DeepEnsemble:
     def __init__(self, x_features, y_features,
-                 n_models=5,
+                 n_models=3,
                  n_hidden=32,
                  dropout=0.3):
         self.x_features = x_features
