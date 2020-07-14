@@ -33,7 +33,7 @@ class MCDropout:
         return model
     
     def loss(self, X, y):
-        return self.model_loss(y, self.model(X))
+        return self.model_loss(y, self.model.predict(X)).numpy()
     
     def fit(self, X, y, epochs=1000, verbose=1):
         self.model.fit(X, y, batch_size=32, epochs=epochs, verbose=verbose)
