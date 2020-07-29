@@ -98,3 +98,17 @@ The visualisation tools implemented include the probability density surface plot
 Hyperparameter optimisation is implemented using Bayesian optimisation in the [Ax](https://ax.dev/) framework, building a smooth surrogate model of outcomes using Gaussian processes from noisy observations from previous rounds of parameterizations to predict performance at unobserved parameterizations, tuning parameters in fewer iterations than grid search or global optimisation techniques.
 
 <img src="https://user-images.githubusercontent.com/27071473/88758400-ed064000-d19a-11ea-9614-a3279b564777.png" height="200">
+
+# References
+1. Mei, L. I. N., and Christopher William DULA. "Grab taxi: Navigating new frontiers." (2016): 40.
+2. Sutton, Richard S., and Andrew G. Barto. Reinforcement learning: An introduction. MIT press, 2018.
+3. Dillon, Joshua V., et al. "Tensorflow distributions." arXiv preprint arXiv:1711.10604 (2017).
+4. Bishop, Christopher M. "Mixture density networks." (1994).
+5. Mirza, Mehdi, and Simon Osindero. "Conditional generative adversarial nets." arXiv preprint arXiv:1411.1784 (2014).
+6. Blundell, Charles, et al. "Weight uncertainty in neural networks." arXiv preprint arXiv:1505.05424 (2015).
+7. Gal, Yarin, and Zoubin Ghahramani. "Dropout as a bayesian approximation: Representing model uncertainty in deep learning." international conference on machine learning. 2016.
+8. Lakshminarayanan, Balaji, Alexander Pritzel, and Charles Blundell. "Simple and scalable predictive uncertainty estimation using deep ensembles." Advances in neural information processing systems. 2017.
+9. Fort, Stanislav, Huiyi Hu, and Balaji Lakshminarayanan. "Deep ensembles: A loss landscape perspective." arXiv preprint arXiv:1912.02757 (2019).
+10. Chang, Daniel T. "Bayesian Hyperparameter Optimization with BoTorch, GPyTorch and Ax." arXiv preprint arXiv:1912.05686 (2019).
+11. Dataset at https://www.kaggle.com/aungpyaeap/supermarket-sales.
+12. Dataset at https://www.kaggle.com/binovi/wholesale-customers-data-set.
