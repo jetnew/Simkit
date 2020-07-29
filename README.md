@@ -92,9 +92,21 @@ The performance metrics computed are the Kullback-Leibler divergence and Jensen-
 
 ### Kullback-Leibler Divergence
 
+<div align="center">
+<img src="https://latex.codecogs.com/gif.latex?D_{JS}(P||Q)=&space;\frac{1}{2}&space;D_{KL}(P||M)&space;&plus;&space;\frac{1}{2}&space;D_{KL}(Q||M)" title="D_{JS}(P||Q)= \frac{1}{2} D_{KL}(P||M) + \frac{1}{2} D_{KL}(Q||M)" />
+</div>
+
 $$ D_{KL}(P||Q)=\sum P(x)log(\frac{P(x)}{Q(x)}) $$
 
 ### Jensen-Shannon Divergence
+
+<div align="center">
+<img src="https://latex.codecogs.com/gif.latex?M=\frac{1}{2}(P&plus;Q)" title="M=\frac{1}{2}(P+Q)" />
+</div>
+
+<div align="center">
+<img src="https://latex.codecogs.com/gif.latex?D_{JS}(P||Q)=&space;\frac{1}{2}&space;D_{KL}(P||M)&space;&plus;&space;\frac{1}{2}&space;D_{KL}(Q||M)" title="D_{JS}(P||Q)= \frac{1}{2} D_{KL}(P||M) + \frac{1}{2} D_{KL}(Q||M)" />
+</div>
 
 $$ M=\frac{1}{2}(P+Q) $$
 $$ D_{JS}(P||Q)= \frac{1}{2} D_{KL}(P||M) + \frac{1}{2} D_{KL}(Q||M) $$
