@@ -103,9 +103,8 @@ $$ D_{JS}(P||Q)= \frac{1}{2} D_{KL}(P||M) + \frac{1}{2} D_{KL}(Q||M) $$
 
 The visualisation tools implemented include the probability density surface plot (left) that visualises the probability densities at each coordinate, and the grid violin relative density plot (right) that visualises the relative densities between the actual data and the generated data of the fitted model using histograms.
 
-<p>
+<p align="center">
 <img src="https://user-images.githubusercontent.com/27071473/88758242-8b45d600-d19a-11ea-917d-25749c3e0a48.png" height="200">
-
 <img src="https://user-images.githubusercontent.com/27071473/88758282-a9133b00-d19a-11ea-8840-e1321ae0253c.png" height="200">
 </p>
 
