@@ -6,6 +6,27 @@ A generalized framework for generative and probabilistic modelling to for traini
 
 Many pricing and decision making problems at the core of Grab’s ride-hailing and deliveries business can be formulated as reinforcement learning problems, with interactions of millions of passengers, drivers and merchants from over 65 cities across the Southeast Asia region.
 
+# Usage
+
+```python
+from data.synthetic import get_normal_data, plot_data
+from model.gmm import GMM
+
+# Get 4 clusters of 1000 normally distributed synthetic data
+X, y = get_normal_data(1000, plot=True)
+
+# Fit a Gaussian Mixture Density Network
+gmm = GMM(x_features=2,
+          y_features=1,
+          n_components=32,
+          n_hidden=32)
+gmm.fit(X, y, epochs=20000)
+
+# Predict y given X
+y_hat = gmm.predict(X)
+plot_data(X, y_hat)
+```
+
 # Models
 
 ## Conditional Generative Feature Models
